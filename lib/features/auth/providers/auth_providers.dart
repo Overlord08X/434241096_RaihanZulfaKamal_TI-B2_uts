@@ -2,7 +2,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_ticketing_app/core/services/auth_service.dart';
 import 'package:e_ticketing_app/core/services/api_service.dart';
-import 'package:e_ticketing_app/core/services/ticket_service.dart';
 import 'package:e_ticketing_app/shared/models/user_model.dart';
 
 // Service Providers
@@ -19,10 +18,6 @@ final apiServiceProvider = Provider<ApiService>((ref) {
   return ApiService();
 });
 
-final ticketServiceProvider = Provider<TicketService>((ref) {
-  return TicketService();
-});
-
 // Auth State Providers
 final currentUserProvider = FutureProvider<User?>((ref) async {
   final authService = await ref.watch(authServiceProvider.future);
@@ -33,3 +28,8 @@ final isLoggedInProvider = FutureProvider<bool>((ref) async {
   final authService = await ref.watch(authServiceProvider.future);
   return authService.isLoggedIn();
 });
+
+void refreshAuthState(WidgetRef ref) {
+  ref.invalidate(currentUserProvider);
+  ref.invalidate(isLoggedInProvider);
+}

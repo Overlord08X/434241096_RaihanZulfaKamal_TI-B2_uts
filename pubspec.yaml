@@ -48,6 +48,10 @@ dependencies:
   # Local storage
   shared_preferences: ^2.2.2
 
+  # Attachment input
+  image_picker: ^1.1.2
+  file_picker: ^8.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:e_ticketing_app/core/constants/app_constants.dart';
+import 'package:e_ticketing_app/core/providers/theme_provider.dart';
 import 'package:e_ticketing_app/routing/app_router.dart';
 
 void main() {
@@ -17,23 +18,28 @@ class MyApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
+    final themeMode = ref.watch(themeModeProvider);
 
     return MaterialApp.router(
       title: 'E-Ticketing Helpdesk',
-      theme: _buildTheme(),
+      theme: _buildTheme(Brightness.light),
+      darkTheme: _buildTheme(Brightness.dark),
+      themeMode: themeMode,
       routerConfig: router,
       debugShowCheckedModeBanner: false,
     );
   }
 
-  ThemeData _buildTheme() {
+  ThemeData _buildTheme(Brightness brightness) {
+    final isDark = brightness == Brightness.dark;
+
     return ThemeData(
       useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.primary,
-        brightness: Brightness.light,
+        brightness: brightness,
       ),
-      scaffoldBackgroundColor: AppColors.surface,
+      scaffoldBackgroundColor: isDark ? const Color(0xFF111014) : AppColors.surface,
       appBarTheme: AppBarTheme(
         centerTitle: false,
         elevation: 0,

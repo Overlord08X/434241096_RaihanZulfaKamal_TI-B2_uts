@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:e_ticketing_app/core/constants/app_constants.dart';
 import 'package:e_ticketing_app/features/auth/providers/auth_providers.dart';
+import 'package:e_ticketing_app/features/tickets/providers/ticket_providers.dart';
 
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({Key? key}) : super(key: key);
@@ -11,6 +12,7 @@ class DashboardScreen extends ConsumerWidget {
     try {
       final authService = await ref.read(authServiceProvider.future);
       await authService.logout();
+      refreshAuthState(ref);
       if (context.mounted) {
         context.go('/login');
       }
@@ -34,6 +36,10 @@ class DashboardScreen extends ConsumerWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => context.push('/notifications'),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _logout(context, ref),
@@ -91,6 +97,13 @@ class DashboardScreen extends ConsumerWidget {
                       color: AppColors.secondary,
                       onTap: () => context.push('/tickets'),
                     ),
+                    _DashboardMenuItem(
+                      icon: Icons.person_outline,
+                      title: 'Profile',
+                      description: 'Account and app theme',
+                      color: AppColors.statusInProgress,
+                      onTap: () => context.push('/profile'),
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.xl),
@@ -102,33 +115,47 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                 ),
                 const SizedBox(height: AppSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Open',
-                        count: '3',
-                        color: AppColors.statusOpen,
+                ref.watch(dashboardStatsProvider).when(
+                      data: (stats) => Row(
+                        children: [
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Total',
+                              count: '${stats.total}',
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Open',
+                              count: '${stats.open}',
+                              color: AppColors.statusOpen,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Progress',
+                              count: '${stats.inProgress}',
+                              color: AppColors.statusInProgress,
+                            ),
+                          ),
+                          const SizedBox(width: AppSpacing.md),
+                          Expanded(
+                            child: _StatCard(
+                              title: 'Done',
+                              count: '${stats.done}',
+                              color: AppColors.statusDone,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _StatCard(
-                        title: 'In Progress',
-                        count: '2',
-                        color: AppColors.statusInProgress,
+                      loading: () => const Center(
+                        child: CircularProgressIndicator(),
                       ),
+                      error: (error, stack) => Text('Error: $error'),
                     ),
-                    const SizedBox(width: AppSpacing.md),
-                    Expanded(
-                      child: _StatCard(
-                        title: 'Done',
-                        count: '5',
-                        color: AppColors.statusDone,
-                      ),
-                    ),
-                  ],
-                ),
               ],
             ),
           );

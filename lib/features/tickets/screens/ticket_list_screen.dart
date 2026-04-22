@@ -3,32 +3,81 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:e_ticketing_app/core/constants/app_constants.dart';
 import 'package:e_ticketing_app/core/utils/utils.dart';
+import 'package:e_ticketing_app/features/auth/providers/auth_providers.dart';
+import 'package:e_ticketing_app/shared/models/ticket_model.dart';
+import 'package:e_ticketing_app/shared/models/user_model.dart';
 import 'package:e_ticketing_app/shared/widgets/custom_widgets.dart';
 import 'package:e_ticketing_app/features/tickets/providers/ticket_providers.dart';
 
-class TicketListScreen extends ConsumerWidget {
+class TicketListScreen extends ConsumerStatefulWidget {
   const TicketListScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final ticketsAsync = ref.watch(userTicketsProvider);
+  ConsumerState<TicketListScreen> createState() => _TicketListScreenState();
+}
+
+class _TicketListScreenState extends ConsumerState<TicketListScreen> {
+  TicketStatus? _statusFilter;
+
+  @override
+  Widget build(BuildContext context) {
+    final userAsync = ref.watch(currentUserProvider);
+    final ticketsAsync = ref.watch(myOrAllTicketsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My Tickets'),
+        title: userAsync.maybeWhen(
+          data: (user) {
+            final isStaff = user != null && user.role != UserRole.user;
+            return Text(isStaff ? 'All Tickets' : 'My Tickets');
+          },
+          orElse: () => const Text('Tickets'),
+        ),
         elevation: 0,
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
           IconButton(
+            icon: const Icon(Icons.notifications_none),
+            onPressed: () => context.push('/notifications'),
+          ),
+          IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => context.push('/create-ticket'),
+          ),
+          PopupMenuButton<TicketStatus?>(
+            icon: const Icon(Icons.filter_list),
+            onSelected: (value) {
+              setState(() => _statusFilter = value);
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem<TicketStatus?>(
+                value: null,
+                child: Text('All Status'),
+              ),
+              const PopupMenuItem<TicketStatus?>(
+                value: TicketStatus.open,
+                child: Text('Open'),
+              ),
+              const PopupMenuItem<TicketStatus?>(
+                value: TicketStatus.inProgress,
+                child: Text('In Progress'),
+              ),
+              const PopupMenuItem<TicketStatus?>(
+                value: TicketStatus.done,
+                child: Text('Done'),
+              ),
+            ],
           ),
         ],
       ),
       body: ticketsAsync.when(
         data: (tickets) {
-          if (tickets.isEmpty) {
+          final filteredTickets = _statusFilter == null
+              ? tickets
+              : tickets.where((t) => t.status == _statusFilter).toList();
+
+          if (filteredTickets.isEmpty) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -61,9 +110,9 @@ class TicketListScreen extends ConsumerWidget {
 
           return ListView.builder(
             padding: const EdgeInsets.all(AppSpacing.lg),
-            itemCount: tickets.length,
+            itemCount: filteredTickets.length,
             itemBuilder: (context, index) {
-              final ticket = tickets[index];
+              final ticket = filteredTickets[index];
               return Padding(
                 padding: const EdgeInsets.only(bottom: AppSpacing.md),
                 child: TicketCard(

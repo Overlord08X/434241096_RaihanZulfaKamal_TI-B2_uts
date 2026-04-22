@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:e_ticketing_app/shared/models/user_model.dart';
 
@@ -17,6 +19,7 @@ class AuthService {
         email: email,
         name: email.split('@').first,
         token: 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+        role: _resolveRoleFromEmail(email),
       );
 
       // Save to preferences
@@ -24,6 +27,38 @@ class AuthService {
       await _prefs.setString(_userKey, _userToJson(user));
 
       return user;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<User?> register({
+    required String name,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final user = User(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        email: email,
+        name: name,
+        token: 'mock_token_${DateTime.now().millisecondsSinceEpoch}',
+        role: UserRole.user,
+      );
+
+      await _prefs.setString(_tokenKey, user.token);
+      await _prefs.setString(_userKey, _userToJson(user));
+
+      return user;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  Future<void> resetPassword(String email) async {
+    try {
+      // Simulated API request.
+      await Future.delayed(const Duration(milliseconds: 800));
     } catch (e) {
       rethrow;
     }
@@ -59,32 +94,21 @@ class AuthService {
   }
 
   String _userToJson(User user) {
-    return '{"id":"${user.id}","email":"${user.email}","name":"${user.name}","token":"${user.token}"}';
+    return jsonEncode(user.toJson());
   }
 
   User _jsonToUser(String json) {
-    // Simple JSON parsing without external package
-    final map = _parseSimpleJson(json);
-    return User(
-      id: map['id'] ?? '',
-      email: map['email'] ?? '',
-      name: map['name'] ?? '',
-      token: map['token'] ?? '',
-    );
+    final map = jsonDecode(json) as Map<String, dynamic>;
+    return User.fromJson(map);
   }
 
-  Map<String, String> _parseSimpleJson(String json) {
-    final map = <String, String>{};
-    final content = json.replaceAll('{', '').replaceAll('}', '');
-    final pairs = content.split(',');
-    for (final pair in pairs) {
-      final parts = pair.split(':');
-      if (parts.length == 2) {
-        final key = parts[0].trim().replaceAll('"', '');
-        final value = parts[1].trim().replaceAll('"', '');
-        map[key] = value;
-      }
+  UserRole _resolveRoleFromEmail(String email) {
+    if (email.contains('admin')) {
+      return UserRole.admin;
     }
-    return map;
+    if (email.contains('helpdesk')) {
+      return UserRole.helpdesk;
+    }
+    return UserRole.user;
   }
 }

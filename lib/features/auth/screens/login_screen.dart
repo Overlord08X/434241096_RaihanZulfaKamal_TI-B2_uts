@@ -47,6 +47,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       );
 
       if (user != null && mounted) {
+        refreshAuthState(ref);
         context.go('/dashboard');
       }
     } catch (e) {
@@ -143,6 +144,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       text: 'Sign In',
                       onPressed: _handleLogin,
                       isLoading: _isLoading,
+                    ),
+                    const SizedBox(height: AppSpacing.sm),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () => context.push('/register'),
+                          child: const Text('Create account'),
+                        ),
+                        TextButton(
+                          onPressed: () => context.push('/reset-password'),
+                          child: const Text('Forgot password?'),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: AppSpacing.lg),
                     // Demo info
